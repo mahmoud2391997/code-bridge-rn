@@ -71,8 +71,7 @@ const Scanner = () => {
 
   const sendToAPI = async (result: ScanResult) => {
     try {
-      // Replace with your actual API endpoint
-      const response = await fetch('https://your-api-endpoint.com/scan', {
+      const response = await fetch('https://v0-barcode-scanner-monitor.vercel.app/api/scan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
