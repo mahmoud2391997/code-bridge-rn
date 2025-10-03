@@ -4,10 +4,7 @@ const config: CapacitorConfig = {
   appId: 'app.lovable.qrscanner',
   appName: 'QR Scanner',
   webDir: 'dist',
-  server: {
-    url: 'https://4ab426a9-617a-48ac-a3e7-34aea2f40118.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  },
+  // ✅ Removed the Lovable preview server URL so the app will use the local build instead
   plugins: {
     BarcodeScanner: {
       googleBarcodeScannerModuleInstallState: 0,
