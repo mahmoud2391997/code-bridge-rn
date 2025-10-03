@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/core';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.4ab426a9617a48aca3e734aea2f40118',
+  appId: 'app.lovable.qrscanner',
   appName: 'QR Scanner',
   webDir: 'dist',
   server: {
