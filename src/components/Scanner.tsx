@@ -32,29 +32,36 @@ const Scanner = () => {
     try {
       setIsScanning(true);
       
-      if (!codeReader.current || !videoRef.current) return;
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       
-      await codeReader.current.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
-        if (result) {
-          const scanResult: ScanResult = {
-            value: result.getText(),
-            format: result.getBarcodeFormat().toString(),
-            timestamp: new Date(),
-          };
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+        
+        if (codeReader.current) {
+          codeReader.current.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
+            if (result) {
+              const scanResult: ScanResult = {
+                value: result.getText(),
+                format: result.getBarcodeFormat().toString(),
+                timestamp: new Date(),
+              };
 
-          setLastResult(scanResult);
-          setHistory(prev => [scanResult, ...prev.slice(0, 9)]);
-          sendToAPI(scanResult);
-          toast.success('Code scanned successfully!');
-          
-          setIsScanning(false);
-          codeReader.current?.reset();
+              setLastResult(scanResult);
+              setHistory(prev => [scanResult, ...prev.slice(0, 9)]);
+              sendToAPI(scanResult);
+              toast.success('Code scanned successfully!');
+              
+              stream.getTracks().forEach(track => track.stop());
+              setIsScanning(false);
+            }
+          });
         }
-      });
+      }
       
     } catch (error) {
-      console.error('Scan error:', error);
-      toast.error('Failed to access camera');
+      console.error('Camera error:', error);
+      toast.error('Camera access denied or unavailable');
       setIsScanning(false);
     }
   };
