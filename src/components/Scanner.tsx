@@ -69,12 +69,25 @@ const Scanner = () => {
 
   const sendToAPI = async (result: ScanResult) => {
     try {
-      await fetch('https://v0-barcode-scanner-monitor.vercel.app/api/scan', {
+      const response = await fetch('https://v0-barcode-scanner-monitor.vercel.app/api/scan', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(result)
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        mode: 'cors',
+        body: JSON.stringify({
+          value: result.value,
+          format: result.format,
+          timestamp: result.timestamp.toISOString()
+        })
       });
-      toast.success('Code scanned and sent to API');
+      
+      if (response.ok) {
+        toast.success('Code scanned and sent to API');
+      } else {
+        throw new Error(`HTTP ${response.status}`);
+      }
     } catch (error) {
       console.error('API error:', error);
       toast.error('Failed to send to API');
