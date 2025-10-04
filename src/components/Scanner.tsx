@@ -76,11 +76,7 @@ const Scanner = () => {
           'Accept': 'application/json'
         },
         mode: 'cors',
-        body: JSON.stringify({
-          gtin: result.value,
-          productName: "Scanned Product",
-          quantity: 1
-        })
+        body: JSON.stringify(result)
       });
       
       if (response.ok) {
