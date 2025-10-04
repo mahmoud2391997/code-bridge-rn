@@ -1,73 +1,82 @@
-# Welcome to your Lovable project
+# QR & Barcode Scanner - Web Application
 
-## Project info
+A modern web-based QR code and barcode scanner built with React, TypeScript, and Vite.
 
-**URL**: https://lovable.dev/projects/4ab426a9-617a-48ac-a3e7-34aea2f40118
+## Features
 
-## How can I edit this code?
+- 📱 Web-based barcode/QR code scanning using device camera
+- 🎨 Modern UI with shadcn/ui components
+- 📊 Scan history tracking
+- 🌙 Dark/light theme support
+- 📱 Responsive design
 
-There are several ways of editing your application.
+## Getting Started
 
-**Use Lovable**
+### Prerequisites
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/4ab426a9-617a-48ac-a3e7-34aea2f40118) and start prompting.
+- Node.js (v16 or higher)
+- npm or yarn
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Installation
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
+# Navigate to the project directory
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Building for Production
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+# Build the application
+npm run build
 
-**Use GitHub Codespaces**
+# Preview the production build
+npm run preview
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Technologies Used
 
-## What technologies are used for this project?
+- **React 18** - Modern React with hooks
+- **TypeScript** - Type-safe development
+- **Vite** - Fast build tool and dev server
+- **Tailwind CSS** - Utility-first CSS framework
+- **shadcn/ui** - Beautiful and accessible UI components
+- **ZXing** - Web-based barcode scanning library
+- **React Router** - Client-side routing
+- **Lucide React** - Beautiful icons
 
-This project is built with:
+## Browser Compatibility
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+This application requires:
+- Modern browsers with camera access support
+- HTTPS connection for camera permissions (in production)
+- WebRTC support for video streaming
 
-## How can I deploy this project?
+## Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/4ab426a9-617a-48ac-a3e7-34aea2f40118) and click on Share -> Publish.
+The application can be deployed to any static hosting service:
 
-## Can I connect a custom domain to my Lovable project?
+- **Vercel**: Connect your GitHub repo for automatic deployments
+- **Netlify**: Drag and drop the `dist` folder after building
+- **GitHub Pages**: Use GitHub Actions for automated deployment
+- **AWS S3 + CloudFront**: For scalable static hosting
 
-Yes, you can!
+## Camera Permissions
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+The app requires camera access to scan barcodes. Make sure to:
+- Serve the app over HTTPS in production
+- Grant camera permissions when prompted
+- Ensure your device has a working camera
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## License
+
+MIT License - feel free to use this project for your own purposes.

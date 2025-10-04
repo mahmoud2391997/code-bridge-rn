@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { BarcodeScanner, BarcodeFormat } from "@capacitor-mlkit/barcode-scanning";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Camera, CheckCircle, XCircle } from "lucide-react";
+import { BrowserMultiFormatReader } from "@zxing/library";
 
 interface ScanResult {
   value: string;
@@ -16,82 +16,53 @@ const Scanner = () => {
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const [history, setHistory] = useState<ScanResult[]>([]);
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const codeReader = useRef<BrowserMultiFormatReader | null>(null);
+
+  useEffect(() => {
+    codeReader.current = new BrowserMultiFormatReader();
+    return () => {
+      if (codeReader.current) {
+        codeReader.current.reset();
+      }
+    };
+  }, []);
+
   const startScan = async () => {
     try {
-      // Request camera permissions
-      const { camera } = await BarcodeScanner.requestPermissions();
+      if (!codeReader.current || !videoRef.current) return;
       
-      if (camera !== 'granted') {
-        toast.error('Camera permission denied');
-        return;
-      }
-
-      // Start scanning
       setIsScanning(true);
-      document.body.classList.add('scanner-active');
+      
+      const result = await codeReader.current.decodeOnceFromVideoDevice(undefined, videoRef.current);
+      
+      const scanResult: ScanResult = {
+        value: result.getText(),
+        format: result.getBarcodeFormat().toString(),
+        timestamp: new Date(),
+      };
 
-      const result = await BarcodeScanner.scan({
-        formats: [
-          BarcodeFormat.QrCode,
-          BarcodeFormat.Code128,
-          BarcodeFormat.Code39,
-          BarcodeFormat.Code93,
-          BarcodeFormat.Ean13,
-          BarcodeFormat.Ean8,
-          BarcodeFormat.UpcA,
-          BarcodeFormat.UpcE,
-        ],
-      });
-
-      if (result.barcodes.length > 0) {
-        const scannedData = result.barcodes[0];
-        const scanResult: ScanResult = {
-          value: scannedData.rawValue,
-          format: scannedData.format,
-          timestamp: new Date(),
-        };
-
-        setLastResult(scanResult);
-        setHistory(prev => [scanResult, ...prev.slice(0, 9)]);
-        
-        // Send to API
-        await sendToAPI(scanResult);
-        
-        toast.success('Code scanned successfully!');
-      }
+      setLastResult(scanResult);
+      setHistory(prev => [scanResult, ...prev.slice(0, 9)]);
+      
+      await sendToAPI(scanResult);
+      toast.success('Code scanned successfully!');
+      
     } catch (error) {
       console.error('Scan error:', error);
-      toast.error('Failed to scan code');
+      toast.error('Failed to scan code or no camera access');
     } finally {
       setIsScanning(false);
-      document.body.classList.remove('scanner-active');
-      await BarcodeScanner.stopScan();
+      if (codeReader.current) {
+        codeReader.current.reset();
+      }
     }
   };
 
   const sendToAPI = async (result: ScanResult) => {
-    try {
-      const response = await fetch('https://v0-barcode-scanner-monitor.vercel.app/api/scan', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          code: result.value,
-          format: result.format,
-          timestamp: result.timestamp,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('API request failed');
-      }
-
-      toast.success('Data sent to API');
-    } catch (error) {
-      console.error('API error:', error);
-      toast.error('Failed to send data to API');
-    }
+    // API call removed for standalone app
+    console.log('Scanned data:', result);
+    toast.success('Code scanned and logged');
   };
 
   return (
@@ -104,9 +75,18 @@ const Scanner = () => {
 
         <Card className="p-6 bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20">
           <div className="flex flex-col items-center space-y-4">
-            <div className="w-32 h-32 rounded-full bg-primary/20 flex items-center justify-center">
-              <Camera className="w-16 h-16 text-primary" />
-            </div>
+            {isScanning ? (
+              <video
+                ref={videoRef}
+                className="w-full max-w-md h-64 bg-black rounded-lg"
+                autoPlay
+                playsInline
+              />
+            ) : (
+              <div className="w-32 h-32 rounded-full bg-primary/20 flex items-center justify-center">
+                <Camera className="w-16 h-16 text-primary" />
+              </div>
+            )}
             
             <Button
               onClick={startScan}
@@ -155,11 +135,7 @@ const Scanner = () => {
         )}
       </div>
 
-      <style>{`
-        body.scanner-active {
-          background: transparent;
-        }
-      `}</style>
+
     </div>
   );
 };
