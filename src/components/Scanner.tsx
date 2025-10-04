@@ -77,9 +77,9 @@ const Scanner = () => {
         },
         mode: 'cors',
         body: JSON.stringify({
-          value: result.value,
-          format: result.format,
-          timestamp: result.timestamp.toISOString()
+          gtin: result.value,
+          productName: "Scanned Product",
+          quantity: 1
         })
       });
       
