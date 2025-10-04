@@ -52,6 +52,7 @@ const Scanner = () => {
               sendToAPI(scanResult);
               toast.success('Code scanned successfully!');
               
+              codeReader.current?.reset();
               stream.getTracks().forEach(track => track.stop());
               setIsScanning(false);
             }
