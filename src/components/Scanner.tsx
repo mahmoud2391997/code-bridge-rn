@@ -30,39 +30,47 @@ const Scanner = () => {
 
   const startScan = async () => {
     try {
-      if (!codeReader.current || !videoRef.current) return;
-      
       setIsScanning(true);
       
-      const result = await codeReader.current.decodeOnceFromVideoDevice(undefined, videoRef.current);
+      if (!codeReader.current || !videoRef.current) return;
       
-      const scanResult: ScanResult = {
-        value: result.getText(),
-        format: result.getBarcodeFormat().toString(),
-        timestamp: new Date(),
-      };
+      await codeReader.current.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
+        if (result) {
+          const scanResult: ScanResult = {
+            value: result.getText(),
+            format: result.getBarcodeFormat().toString(),
+            timestamp: new Date(),
+          };
 
-      setLastResult(scanResult);
-      setHistory(prev => [scanResult, ...prev.slice(0, 9)]);
-      
-      await sendToAPI(scanResult);
-      toast.success('Code scanned successfully!');
+          setLastResult(scanResult);
+          setHistory(prev => [scanResult, ...prev.slice(0, 9)]);
+          sendToAPI(scanResult);
+          toast.success('Code scanned successfully!');
+          
+          setIsScanning(false);
+          codeReader.current?.reset();
+        }
+      });
       
     } catch (error) {
       console.error('Scan error:', error);
-      toast.error('Failed to scan code or no camera access');
-    } finally {
+      toast.error('Failed to access camera');
       setIsScanning(false);
-      if (codeReader.current) {
-        codeReader.current.reset();
-      }
     }
   };
 
   const sendToAPI = async (result: ScanResult) => {
-    // API call removed for standalone app
-    console.log('Scanned data:', result);
-    toast.success('Code scanned and logged');
+    try {
+      await fetch('https://v0-barcode-scanner-monitor.vercel.app/api/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(result)
+      });
+      toast.success('Code scanned and sent to API');
+    } catch (error) {
+      console.error('API error:', error);
+      toast.error('Failed to send to API');
+    }
   };
 
   return (
