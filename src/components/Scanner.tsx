@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Camera, CheckCircle, XCircle } from "lucide-react";
+import { Camera, CheckCircle, XCircle, Send } from "lucide-react";
 import { BrowserMultiFormatReader } from "@zxing/library";
 
 interface ScanResult {
@@ -15,6 +16,7 @@ const Scanner = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const [history, setHistory] = useState<ScanResult[]>([]);
+  const [testData, setTestData] = useState("");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReader = useRef<BrowserMultiFormatReader | null>(null);
@@ -76,7 +78,11 @@ const Scanner = () => {
           'Accept': 'application/json'
         },
         mode: 'cors',
-        body: JSON.stringify(result)
+        body: JSON.stringify({
+          gtin: result.value,
+          productName: "Scanned Product",
+          quantity: 1
+        })
       });
       
       if (response.ok) {
@@ -122,21 +128,37 @@ const Scanner = () => {
               {isScanning ? 'Scanning...' : 'Start Scanning'}
             </Button>
 
-            {lastResult && (
-              <div className="w-full p-4 bg-card rounded-lg border border-accent space-y-2">
-                <div className="flex items-center gap-2 text-accent">
-                  <CheckCircle className="w-5 h-5" />
-                  <span className="font-semibold">Last Scan</span>
-                </div>
-                <div className="text-sm space-y-1">
-                  <p className="text-foreground font-mono break-all">{lastResult.value}</p>
-                  <p className="text-muted-foreground">Format: {lastResult.format}</p>
-                  <p className="text-muted-foreground">
-                    Time: {lastResult.timestamp.toLocaleTimeString()}
-                  </p>
-                </div>
+            <div className="w-full space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter test data to send to API"
+                  value={testData}
+                  onChange={(e) => setTestData(e.target.value)}
+                />
+                <Button
+                  onClick={() => sendToAPI({ value: testData, format: "manual", timestamp: new Date() })}
+                  disabled={!testData}
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
               </div>
-            )}
+              
+              {lastResult && (
+                <div className="p-4 bg-card rounded-lg border border-accent space-y-2">
+                  <div className="flex items-center gap-2 text-accent">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="font-semibold">Last Scan</span>
+                  </div>
+                  <div className="text-sm space-y-1">
+                    <p className="text-foreground font-mono break-all">{lastResult.value}</p>
+                    <p className="text-muted-foreground">Format: {lastResult.format}</p>
+                    <p className="text-muted-foreground">
+                      Time: {lastResult.timestamp.toLocaleTimeString()}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </Card>
 
