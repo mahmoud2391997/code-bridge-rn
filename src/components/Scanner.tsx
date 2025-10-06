@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Camera, CheckCircle, XCircle, Send } from "lucide-react";
 import { BrowserMultiFormatReader } from "@zxing/library";
+import { supabase } from "../hooks/client"; // Import Supabase client
 
 interface ScanResult {
   value: string;
@@ -51,7 +52,7 @@ const Scanner = () => {
 
               setLastResult(scanResult);
               setHistory(prev => [scanResult, ...prev.slice(0, 9)]);
-              sendToAPI(scanResult);
+              sendToSupabase(scanResult); // Send to Supabase instead of external API
               toast.success('Code scanned successfully!');
               
               codeReader.current?.reset();
@@ -69,15 +70,51 @@ const Scanner = () => {
     }
   };
 
-  const sendToAPI = async (result: ScanResult) => {
+  const sendToSupabase = async (result: ScanResult) => {
     try {
-      const response = await fetch('https://v0-barcode-scanner-monitor.vercel.app/api/scan', {
+      // Create scan data for Supabase
+      const scanData = {
+        gtin: result.value,
+        product_name: "Scanned Product", // You can enhance this with product lookup
+        quantity: 1,
+        unit: "pcs",
+        manufacturer: "Unknown Manufacturer",
+        origin_country: "Unknown",
+        current_status: "scanned",
+        transport_mode: "manual_scan",
+        received_at: new Date().toISOString(),
+      };
+
+      // Insert into Supabase
+      const { data, error } = await supabase
+        .from('scans')
+        .insert([scanData])
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('✅ Scan saved to Supabase:', data);
+      toast.success('Scan saved to database!');
+
+      // Also send to your Edge Function if needed
+      await sendToEdgeFunction(result);
+
+    } catch (error) {
+      console.error('❌ Supabase error:', error);
+      toast.error('Failed to save scan to database');
+    }
+  };
+
+  const sendToEdgeFunction = async (result: ScanResult) => {
+    try {
+      const response = await fetch('https://rxnxhrlxnqdlqqraefgh.supabase.co/functions/v1/barcode-scanner/scan', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}` // Add auth if needed
         },
-        mode: 'cors',
         body: JSON.stringify({
           gtin: result.value,
           productName: "Scanned Product",
@@ -86,14 +123,32 @@ const Scanner = () => {
       });
       
       if (response.ok) {
-        toast.success('Code scanned and sent to API');
+        console.log('✅ Scan sent to Edge Function');
       } else {
-        throw new Error(`HTTP ${response.status}`);
+        console.warn('⚠️ Edge Function response not OK:', response.status);
       }
     } catch (error) {
-      console.error('API error:', error);
-      toast.error('Failed to send to API');
+      console.warn('⚠️ Edge Function error (non-critical):', error);
+      // Don't show error toast for this as Supabase insertion is the primary method
     }
+  };
+
+  const handleManualSend = async () => {
+    if (!testData.trim()) {
+      toast.error('Please enter test data');
+      return;
+    }
+
+    const manualResult: ScanResult = {
+      value: testData,
+      format: "manual",
+      timestamp: new Date(),
+    };
+
+    setLastResult(manualResult);
+    setHistory(prev => [manualResult, ...prev.slice(0, 9)]);
+    await sendToSupabase(manualResult);
+    setTestData(""); // Clear input after sending
   };
 
   return (
@@ -101,7 +156,7 @@ const Scanner = () => {
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold text-foreground">QR & Barcode Scanner</h1>
-          <p className="text-muted-foreground">Scan codes and send results to your API</p>
+          <p className="text-muted-foreground">Scan codes and save to Supabase database</p>
         </div>
 
         <Card className="p-6 bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20">
@@ -131,12 +186,17 @@ const Scanner = () => {
             <div className="w-full space-y-4">
               <div className="flex gap-2">
                 <Input
-                  placeholder="Enter test data to send to API"
+                  placeholder="Enter test GTIN/barcode to save to database"
                   value={testData}
                   onChange={(e) => setTestData(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleManualSend();
+                    }
+                  }}
                 />
                 <Button
-                  onClick={() => sendToAPI({ value: testData, format: "manual", timestamp: new Date() })}
+                  onClick={handleManualSend}
                   disabled={!testData}
                 >
                   <Send className="w-4 h-4" />
@@ -181,8 +241,6 @@ const Scanner = () => {
           </div>
         )}
       </div>
-
-
     </div>
   );
 };
